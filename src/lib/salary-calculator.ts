@@ -86,9 +86,9 @@ export function calculateTotals(attendances: Array<{
 }>) {
   return attendances.reduce((totals, attendance) => {
     return {
-      totalSalary: totals.totalSalary + attendance.total_salary,
-      totalPeterCommission: totals.totalPeterCommission + attendance.peter_commission,
-      totalBossProfit: totals.totalBossProfit + attendance.boss_profit,
+      totalSalary: totals.totalSalary + Number(attendance.total_salary),
+      totalPeterCommission: totals.totalPeterCommission + Number(attendance.peter_commission),
+      totalBossProfit: totals.totalBossProfit + Number(attendance.boss_profit),
       totalClients: totals.totalClients + attendance.client_count,
       workingDays: totals.workingDays + (attendance.is_working ? 1 : 0)
     }
