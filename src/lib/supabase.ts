@@ -9,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface Employee {
   id: number
   name: string
+  last_salary_date: string | null
   created_at: string
   updated_at: string
 }

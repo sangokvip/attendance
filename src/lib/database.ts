@@ -45,8 +45,21 @@ export class EmployeeService {
       .from('employees')
       .delete()
       .eq('id', id)
-    
+
     if (error) throw error
+  }
+
+  // 更新员工工资结算日期
+  static async updateSalaryDate(id: number, date: string): Promise<Employee> {
+    const { data, error } = await supabase
+      .from('employees')
+      .update({ last_salary_date: date })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
   }
 }
 

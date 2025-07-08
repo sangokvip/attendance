@@ -55,6 +55,12 @@ export default function Home() {
                 报表统计
               </Link>
               <Link
+                href="/salary"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                工资结算
+              </Link>
+              <Link
                 href="/settings"
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >
@@ -75,7 +81,7 @@ export default function Home() {
               <p className="text-gray-600 mb-4">
                 管理员工考勤，自动计算工资和利润，让您的业务管理更加高效。
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Link
                   href="/employees"
                   className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg border border-blue-200 transition-colors"
@@ -96,6 +102,13 @@ export default function Home() {
                 >
                   <div className="text-purple-600 font-medium">报表统计</div>
                   <div className="text-purple-500 text-sm">查看收入和利润分析</div>
+                </Link>
+                <Link
+                  href="/salary"
+                  className="bg-orange-50 hover:bg-orange-100 p-4 rounded-lg border border-orange-200 transition-colors"
+                >
+                  <div className="text-orange-600 font-medium">工资结算</div>
+                  <div className="text-orange-500 text-sm">管理员工工资发放</div>
                 </Link>
               </div>
             </div>

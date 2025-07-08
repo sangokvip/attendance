@@ -284,7 +284,7 @@ export default function AttendancePage() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {employees.map((employee) => {
                         const attendance = getAttendanceForEmployee(employee.id)
-                        const isWorking = attendance?.is_working || false
+                        const isWorking = attendance?.is_working ?? true // 默认为上班
                         const clientCount = attendance?.client_count || 0
 
                         return (

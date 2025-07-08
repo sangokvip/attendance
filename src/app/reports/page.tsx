@@ -10,7 +10,7 @@ import AuthGuard from '@/components/AuthGuard'
 type ReportPeriod = 'day' | 'week' | 'month'
 
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<ReportPeriod>('day')
+  const [period, setPeriod] = useState<ReportPeriod>('month')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [attendances, setAttendances] = useState<Attendance[]>([])
