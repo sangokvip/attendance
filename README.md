@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KTV考勤系统
 
-## Getting Started
+一个专为KTV员工设计的考勤和工资管理系统，支持复杂的工资计算规则。
 
-First, run the development server:
+## 功能特性
+
+- 📝 员工管理：添加、编辑、删除员工信息
+- 📅 考勤录入：记录每日上班状态和陪客次数
+- 💰 自动工资计算：根据业务规则自动计算工资和利润
+- 📊 报表统计：日报、周报、月报功能
+- 📱 响应式设计：支持手机和电脑访问
+
+## 业务规则
+
+### 收入结构
+- 客人付款：900元/次
+- KTV费用：120元/次（需支付给KTV）
+
+### 员工工资计算
+- **基本工资**：
+  - 有陪客：350元/天
+  - 无陪客但上班：100元/天
+- **陪客提成**：
+  - 第1次：200元
+  - 第2次及以后：300元/次
+
+### Peter收入
+- 员工第1次陪客：50元
+- 员工第2次及以后陪客：100元/次
+
+### 利润计算示例
+- 员工陪1次客人：900 - 120 - 350 - 200 - 50 = 180元
+- 员工上班但未陪客：0 - 100 = -100元
+
+## 技术栈
+
+- **前端**：Next.js 14 + TypeScript + Tailwind CSS
+- **数据库**：Supabase (PostgreSQL)
+- **部署**：Vercel
+
+## 数据库设置
+
+⚠️ **重要**：请先执行以下步骤设置数据库：
+
+1. 访问您的Supabase项目控制台：https://supabase.com/dashboard
+2. 进入SQL编辑器
+3. 执行 `database/schema.sql` 中的SQL脚本来创建表结构
+
+## 本地开发
 
 ```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+访问 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 环境变量
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+已配置的环境变量：
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-## Learn More
+## 部署到Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. 将代码推送到GitHub
+2. 在Vercel中导入项目
+3. 设置环境变量
+4. 部署完成
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 使用说明
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **员工管理**：在员工管理页面添加您的员工
+2. **考勤录入**：每日记录员工的上班状态和陪客次数
+3. **查看报表**：在报表页面查看收入统计和趋势分析
 
-## Deploy on Vercel
+## 开发进度
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [x] 项目初始化和环境配置
+- [x] 数据库设计和表结构创建
+- [x] 员工管理功能开发
+- [x] 考勤录入功能开发
+- [x] 工资计算逻辑实现
+- [x] 报表统计功能开发
+- [x] 系统设置管理功能
+- [x] 界面优化和测试
+- [x] Vercel部署配置
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 新增功能
+
+### 系统设置管理
+- 🔧 **费用设置**：管理员可以动态调整所有费用相关的设置
+- 💰 **实时生效**：设置更改后立即影响工资计算
+- 🔒 **安全保护**：重要设置修改需要确认
+
+### 功能亮点
+- 📊 **实时计算**：考勤录入时实时显示工资和利润
+- 📈 **多维度报表**：日报、周报、月报，支持CSV导出
+- 🎯 **精确计算**：支持复杂的阶梯式提成计算
+- 📱 **响应式设计**：完美适配手机和电脑
+- ⚡ **高性能**：使用Next.js和Supabase确保快速响应
+
+## 部署到Vercel
+
+### 步骤1：准备代码
+```bash
+# 确保所有更改已提交
+git add .
+git commit -m "完成KTV考勤系统开发"
+git push origin main
+```
+
+### 步骤2：在Vercel中部署
+1. 访问 [Vercel Dashboard](https://vercel.com/dashboard)
+2. 点击 "New Project"
+3. 导入您的GitHub仓库
+4. 设置环境变量：
+   - `NEXT_PUBLIC_SUPABASE_URL`: `https://apywhoanrgkiqrraewja.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: `您的Supabase匿名密钥`
+5. 点击 "Deploy"
+
+### 步骤3：更新数据库
+在Supabase控制台中执行 `database/schema.sql` 中的新增SQL（如果还没有执行）：
+```sql
+-- 系统设置表和默认数据
+-- (参见database/schema.sql文件)
+```
+
+## 测试结果
+
+✅ **单元测试通过**：工资计算逻辑测试全部通过
+✅ **功能测试完成**：所有核心功能正常运行
+✅ **界面测试通过**：响应式设计在各设备上正常显示
