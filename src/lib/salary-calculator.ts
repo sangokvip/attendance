@@ -77,7 +77,13 @@ export function formatCurrency(amount: number): string {
  * @param attendances 考勤记录数组
  * @returns 总计数据
  */
-export function calculateTotals(attendances: any[]) {
+export function calculateTotals(attendances: Array<{
+  total_salary: number | string
+  peter_commission: number | string
+  boss_profit: number | string
+  client_count: number
+  is_working: boolean
+}>) {
   return attendances.reduce((totals, attendance) => {
     return {
       totalSalary: totals.totalSalary + attendance.total_salary,

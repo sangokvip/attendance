@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Metadata } from 'next'
 import Link from 'next/link'
 import { EmployeeService } from '@/lib/database'
 import { Employee } from '@/lib/supabase'
@@ -45,9 +44,11 @@ export default function EmployeesPage() {
       setShowAddForm(false)
       setError('')
       await loadEmployees()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('添加员工失败:', error)
-      if (error.message?.includes('duplicate') || error.code === '23505') {
+      const errorMessage = error instanceof Error ? error.message : ''
+      const errorCode = (error as { code?: string })?.code
+      if (errorMessage?.includes('duplicate') || errorCode === '23505') {
         setError('员工姓名已存在')
       } else {
         setError('添加员工失败')
@@ -68,9 +69,11 @@ export default function EmployeesPage() {
       setNewEmployeeName('')
       setError('')
       await loadEmployees()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('更新员工失败:', error)
-      if (error.message?.includes('duplicate') || error.code === '23505') {
+      const errorMessage = error instanceof Error ? error.message : ''
+      const errorCode = (error as { code?: string })?.code
+      if (errorMessage?.includes('duplicate') || errorCode === '23505') {
         setError('员工姓名已存在')
       } else {
         setError('更新员工失败')

@@ -48,7 +48,7 @@ export default function ReportsPage() {
     if (startDate && endDate) {
       loadReportData()
     }
-  }, [startDate, endDate])
+  }, [startDate, endDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadReportData = async () => {
     try {

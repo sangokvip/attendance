@@ -18,7 +18,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     loadData()
-  }, [selectedDate])
+  }, [selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     try {
