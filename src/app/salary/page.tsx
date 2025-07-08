@@ -44,10 +44,7 @@ export default function SalaryPage() {
     }
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '未设置'
-    return new Date(dateString).toLocaleDateString()
-  }
+
 
   const getTotalUnpaidSalary = () => {
     return settlements.reduce((total, settlement) => total + settlement.unpaidBaseSalary, 0)
