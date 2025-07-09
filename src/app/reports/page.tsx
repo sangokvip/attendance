@@ -13,7 +13,7 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<ReportPeriod>('month')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [recentAttendance, setRecentAttendance] = useState<any[]>([])
+  const [recentAttendance, setRecentAttendance] = useState<Attendance[]>([])
   const [showAttendanceDetails, setShowAttendanceDetails] = useState(true)
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [loading, setLoading] = useState(false)

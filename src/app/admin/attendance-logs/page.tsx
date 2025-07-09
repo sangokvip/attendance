@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AttendanceService } from '@/lib/database'
 import { Attendance, supabase } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/salary-calculator'
 import AuthGuard from '@/components/AuthGuard'
@@ -18,7 +17,7 @@ export default function AttendanceLogsPage() {
 
   useEffect(() => {
     loadAttendanceLogs()
-  }, [dateRange])
+  }, [dateRange]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAttendanceLogs = async () => {
     try {
