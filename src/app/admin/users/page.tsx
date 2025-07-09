@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { UserService, CreateUserData } from '@/lib/auth'
 import { User } from '@/lib/supabase'
 import AuthGuard from '@/components/AuthGuard'
+import Navbar from '@/components/Navbar'
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([])
@@ -133,36 +134,7 @@ export default function UsersManagementPage() {
     <AuthGuard requireAdmin={true}>
       <div className="min-h-screen bg-gray-50">
         {/* 导航栏 */}
-        <nav className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex items-center">
-                <Link href="/" className="text-xl font-bold text-gray-900 hover:text-gray-700">
-                  KTV考勤系统 - 用户管理
-                </Link>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link
-                  href="/"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  返回首页
-                </Link>
-                <button
-                  onClick={() => {
-                    if (confirm('确定要退出登录吗？')) {
-                      localStorage.clear()
-                      window.location.href = '/login'
-                    }
-                  }}
-                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-gray-400"
-                >
-                  退出
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
+        <Navbar currentPage="admin" />
 
         {/* 主要内容 */}
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

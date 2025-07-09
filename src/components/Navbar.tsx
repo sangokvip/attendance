@@ -1,27 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { AuthService, AuthUser } from '@/lib/auth'
 
 interface NavbarProps {
-  currentPage?: 'home' | 'employees' | 'attendance' | 'reports' | 'settings'
+  currentPage?: 'home' | 'employees' | 'attendance' | 'reports' | 'settings' | 'salary' | 'admin'
 }
 
 export default function Navbar({ currentPage }: NavbarProps) {
   const router = useRouter()
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    const user = AuthService.getCurrentUser()
+    setCurrentUser(user)
+  }, [])
 
   const handleLogout = () => {
     if (confirm('确定要退出登录吗？')) {
-      localStorage.removeItem('isAuthenticated')
-      localStorage.removeItem('authTime')
+      AuthService.logout()
       router.push('/login')
     }
   }
 
-  const getLinkClass = (page: string) => {
+  const getLinkClass = (page: string, activeColor: string = 'blue') => {
     const baseClass = "px-3 py-2 rounded-md text-sm font-medium"
     if (currentPage === page) {
-      return `${baseClass} text-blue-600 hover:text-blue-700`
+      const colorMap: { [key: string]: string } = {
+        blue: 'text-blue-600 hover:text-blue-700',
+        green: 'text-green-600 hover:text-green-700',
+        purple: 'text-purple-600 hover:text-purple-700',
+        orange: 'text-orange-600 hover:text-orange-700',
+        red: 'text-red-600 hover:text-red-700'
+      }
+      return `${baseClass} ${colorMap[activeColor] || colorMap.blue}`
     }
     return `${baseClass} text-gray-700 hover:text-gray-900`
   }
@@ -36,24 +50,63 @@ export default function Navbar({ currentPage }: NavbarProps) {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="/employees" className={getLinkClass('employees')}>
+            {/* 主要导航链接 */}
+            <Link href="/employees" className={getLinkClass('employees', 'blue')}>
               员工管理
             </Link>
-            <Link href="/attendance" className={getLinkClass('attendance')}>
+            <Link href="/attendance" className={getLinkClass('attendance', 'green')}>
               考勤录入
             </Link>
-            <Link href="/reports" className={getLinkClass('reports')}>
+            <Link href="/reports" className={getLinkClass('reports', 'purple')}>
               报表统计
             </Link>
-            <Link href="/settings" className={getLinkClass('settings')}>
+            <Link href="/salary" className={getLinkClass('salary', 'orange')}>
+              工资结算
+            </Link>
+            <Link href="/settings" className={getLinkClass('settings', 'orange')}>
               系统设置
             </Link>
-            <button
-              onClick={handleLogout}
-              className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-gray-400"
-            >
-              退出
-            </button>
+
+            {/* 管理员专用链接 */}
+            {currentUser?.role === 'admin' && (
+              <Link href="/admin/users" className={getLinkClass('admin', 'red')}>
+                用户管理
+              </Link>
+            )}
+
+            {/* 用户信息和退出 */}
+            <div className="flex items-center space-x-3 border-l border-gray-200 pl-4">
+              {currentUser && (
+                <div className="flex items-center space-x-2">
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">{currentUser.displayName}</div>
+                    <div className="text-gray-500 text-xs">
+                      {currentUser.role === 'admin' ? '管理员' : '用户'}
+                      {currentUser.expiresAt && (
+                        <span className="ml-1">
+                          (至 {new Date(currentUser.expiresAt).toLocaleDateString()})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    currentUser.expiresAt && new Date(currentUser.expiresAt) < new Date()
+                      ? 'bg-red-400'
+                      : 'bg-green-400'
+                  }`} title={
+                    currentUser.expiresAt && new Date(currentUser.expiresAt) < new Date()
+                      ? '账户已过期'
+                      : '账户正常'
+                  }></div>
+                </div>
+              )}
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium border border-gray-300 hover:border-gray-400 transition-colors"
+              >
+                退出
+              </button>
+            </div>
           </div>
         </div>
       </div>
