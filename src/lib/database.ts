@@ -121,7 +121,7 @@ export class AttendanceService {
     // 计算工资（使用数据库中的设置）
     const calculation = await calculateSalaryWithSettings(clientCount, isWorking)
     
-    const attendanceData: any = {
+    const attendanceData: Record<string, unknown> = {
       employee_id: employeeId,
       date,
       is_working: isWorking,
