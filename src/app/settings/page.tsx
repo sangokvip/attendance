@@ -175,7 +175,14 @@ export default function SettingsPage() {
       'FIRST_CLIENT_COMMISSION': '第一次陪客提成',
       'ADDITIONAL_CLIENT_COMMISSION': '第二次及以后陪客提成',
       'PETER_FIRST_CLIENT': 'Peter第一次陪客收入',
-      'PETER_ADDITIONAL_CLIENT': 'Peter第二次及以后陪客收入'
+      'PETER_ADDITIONAL_CLIENT': 'Peter第二次及以后陪客收入',
+      // 新的设置键名映射
+      'base_salary': '有陪客基本工资',
+      'first_client_bonus': '第一次陪客提成',
+      'additional_client_bonus': '第二次及以后陪客提成',
+      'no_client_salary': '无陪客基本工资',
+      'peter_first_client': 'Peter第一次陪客收入',
+      'peter_additional_client': 'Peter第二次及以后陪客收入'
     }
     return names[key] || key
   }
@@ -220,38 +227,52 @@ export default function SettingsPage() {
           </div>
 
           {/* 费用模板 */}
-          {templates.length > 0 && (
-            <div className="bg-white shadow rounded-lg mb-6">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">费用模板</h3>
+          <div className="bg-white shadow rounded-lg mb-6">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">我的费用模板</h3>
+                <span className="text-sm text-gray-500">
+                  {templates.length} 个模板
+                </span>
+              </div>
+
+              {templates.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {templates.map((template) => (
                     <div key={template.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
+                        <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{template.name}</h4>
                           {template.description && (
                             <p className="text-sm text-gray-600 mt-1">{template.description}</p>
                           )}
-                          {template.is_global && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
-                              系统模板
-                            </span>
-                          )}
+                          <div className="flex items-center mt-2 space-x-2">
+                            {template.is_global ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                系统模板
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                自定义模板
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {!template.is_global && (
                           <button
                             onClick={() => deleteTemplate(template.id)}
                             disabled={saving}
-                            className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                            className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50 ml-2"
                           >
                             删除
                           </button>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 mb-3">
-                        基本工资: {formatCurrency(template.template_data.base_salary)} |
-                        首客提成: {formatCurrency(template.template_data.first_client_bonus)}
+                      <div className="text-xs text-gray-500 mb-3 space-y-1">
+                        <div>基本工资: {formatCurrency(template.template_data.base_salary)}</div>
+                        <div>首客提成: {formatCurrency(template.template_data.first_client_bonus)}</div>
+                        <div>续客提成: {formatCurrency(template.template_data.additional_client_bonus)}</div>
+                        <div>无客工资: {formatCurrency(template.template_data.no_client_salary)}</div>
                       </div>
                       <button
                         onClick={() => applyTemplate(template.id)}
@@ -263,9 +284,16 @@ export default function SettingsPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                  <div className="text-gray-500 mb-2">还没有保存的模板</div>
+                  <div className="text-sm text-gray-400">
+                    调整好费用设置后，点击"保存为模板"来保存当前配置
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* 提示信息 */}
           {error && (

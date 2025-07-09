@@ -131,13 +131,14 @@ export class SettingsTemplateService {
     const template = await this.getById(templateId)
     if (!template) throw new Error('模板不存在')
 
+    // 映射模板数据到正确的设置键名
     const settingsData = [
-      { key: 'base_salary', value: template.template_data.base_salary },
-      { key: 'first_client_bonus', value: template.template_data.first_client_bonus },
-      { key: 'additional_client_bonus', value: template.template_data.additional_client_bonus },
-      { key: 'no_client_salary', value: template.template_data.no_client_salary },
-      { key: 'peter_first_client', value: template.template_data.peter_first_client },
-      { key: 'peter_additional_client', value: template.template_data.peter_additional_client }
+      { key: 'BASE_SALARY_WITH_CLIENT', value: template.template_data.base_salary },
+      { key: 'FIRST_CLIENT_COMMISSION', value: template.template_data.first_client_bonus },
+      { key: 'ADDITIONAL_CLIENT_COMMISSION', value: template.template_data.additional_client_bonus },
+      { key: 'BASE_SALARY_NO_CLIENT', value: template.template_data.no_client_salary },
+      { key: 'PETER_FIRST_CLIENT', value: template.template_data.peter_first_client },
+      { key: 'PETER_ADDITIONAL_CLIENT', value: template.template_data.peter_additional_client }
     ]
 
     // 更新设置
@@ -164,8 +165,8 @@ export class SettingsTemplateService {
 
   // 从当前设置创建模板
   static async createFromCurrentSettings(
-    name: string, 
-    description: string, 
+    name: string,
+    description: string,
     userId?: number
   ): Promise<SettingsTemplate> {
     // 获取当前设置
@@ -183,7 +184,7 @@ export class SettingsTemplateService {
 
     if (error) throw error
 
-    // 构建模板数据
+    // 构建模板数据，使用默认值
     const templateData = {
       base_salary: 350,
       first_client_bonus: 200,
@@ -193,10 +194,21 @@ export class SettingsTemplateService {
       peter_additional_client: 100
     }
 
+    // 设置键名映射
+    const keyMapping: Record<string, keyof typeof templateData> = {
+      'BASE_SALARY_WITH_CLIENT': 'base_salary',
+      'FIRST_CLIENT_COMMISSION': 'first_client_bonus',
+      'ADDITIONAL_CLIENT_COMMISSION': 'additional_client_bonus',
+      'BASE_SALARY_NO_CLIENT': 'no_client_salary',
+      'PETER_FIRST_CLIENT': 'peter_first_client',
+      'PETER_ADDITIONAL_CLIENT': 'peter_additional_client'
+    }
+
     // 从设置中更新模板数据
     settings?.forEach(setting => {
-      if (setting.key in templateData) {
-        (templateData as Record<string, number>)[setting.key] = setting.value
+      const templateKey = keyMapping[setting.key]
+      if (templateKey) {
+        templateData[templateKey] = setting.value
       }
     })
 
