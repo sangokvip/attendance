@@ -6,6 +6,7 @@ import { EmployeeService, AttendanceService } from '@/lib/database'
 import { Employee, Attendance } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/salary-calculator'
 import { calculateSalaryWithSettings } from '@/lib/settings'
+import { calculateSalaryWithTemplate } from '@/lib/salary-calculator'
 import { AuthService } from '@/lib/auth'
 import AuthGuard from '@/components/AuthGuard'
 import Navbar from '@/components/Navbar'
@@ -448,18 +449,25 @@ function AttendanceRow({
     setLocalClientCount(clientCount)
   }, [isWorking, clientCount])
 
-  // 动态计算工资
+  // 动态计算工资（根据员工模板或全局设置）
   useEffect(() => {
     const calculateDynamic = async () => {
       try {
-        const result = await calculateSalaryWithSettings(localClientCount, localIsWorking)
+        let result
+        if (employee.template) {
+          // 使用员工专属模板计算
+          result = calculateSalaryWithTemplate(localClientCount, localIsWorking, employee.template)
+        } else {
+          // 使用全局设置计算
+          result = await calculateSalaryWithSettings(localClientCount, localIsWorking)
+        }
         setCalculation(result)
       } catch (error) {
         console.error('计算工资失败:', error)
       }
     }
     calculateDynamic()
-  }, [localIsWorking, localClientCount])
+  }, [localIsWorking, localClientCount, employee.template])
 
   const handleWorkingChange = (working: boolean) => {
     setLocalIsWorking(working)
@@ -494,7 +502,14 @@ function AttendanceRow({
                 : '上班 - 无客人'
               : '休息'
           }></div>
-          <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+          <div>
+            <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+            {employee.template ? (
+              <div className="text-xs text-blue-600">模板: {employee.template.name}</div>
+            ) : (
+              <div className="text-xs text-gray-500">使用全局设置</div>
+            )}
+          </div>
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-center">
