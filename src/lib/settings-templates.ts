@@ -218,7 +218,7 @@ export class SettingsTemplateService {
       name,
       description,
       template_data: templateData,
-      user_id: (userId && userId > 0) ? userId : null, // 临时管理员保存为全局模板
+      user_id: (userId && userId > 0) ? userId : undefined, // 临时管理员保存为全局模板
       is_global: false
     })
   }
