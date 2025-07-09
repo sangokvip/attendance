@@ -1,18 +1,19 @@
 import { supabase, SettingsTemplate } from './supabase'
 
 export class SettingsTemplateService {
-  // 获取所有模板（全局模板 + 用户自定义模板）
+  // 获取用户自定义模板（不包含系统模板）
   static async getAll(userId?: number): Promise<SettingsTemplate[]> {
     let query = supabase
       .from('settings_templates')
       .select('*')
-      .order('is_global', { ascending: false })
+      .eq('is_global', false) // 只获取用户自定义模板
       .order('created_at', { ascending: false })
 
     if (userId) {
-      query = query.or(`is_global.eq.true,user_id.eq.${userId}`)
+      query = query.eq('user_id', userId)
     } else {
-      query = query.eq('is_global', true)
+      // 如果没有用户ID，返回空数组（不显示任何模板）
+      return []
     }
 
     const { data, error } = await query

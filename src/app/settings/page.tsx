@@ -175,14 +175,7 @@ export default function SettingsPage() {
       'FIRST_CLIENT_COMMISSION': '第一次陪客提成',
       'ADDITIONAL_CLIENT_COMMISSION': '第二次及以后陪客提成',
       'PETER_FIRST_CLIENT': 'Peter第一次陪客收入',
-      'PETER_ADDITIONAL_CLIENT': 'Peter第二次及以后陪客收入',
-      // 新的设置键名映射
-      'base_salary': '有陪客基本工资',
-      'first_client_bonus': '第一次陪客提成',
-      'additional_client_bonus': '第二次及以后陪客提成',
-      'no_client_salary': '无陪客基本工资',
-      'peter_first_client': 'Peter第一次陪客收入',
-      'peter_additional_client': 'Peter第二次及以后陪客收入'
+      'PETER_ADDITIONAL_CLIENT': 'Peter第二次及以后陪客收入'
     }
     return names[key] || key
   }
