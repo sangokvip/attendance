@@ -180,7 +180,12 @@ export class UserService {
 
   // 更新用户（仅管理员）
   static async updateUser(userId: number, updates: Partial<CreateUserData>): Promise<User> {
-    const updateData: any = {
+    const updateData: {
+      display_name?: string
+      role?: 'admin' | 'user'
+      expires_at?: string | null
+      password_hash?: string
+    } = {
       display_name: updates.displayName,
       role: updates.role,
       expires_at: updates.expiresAt
