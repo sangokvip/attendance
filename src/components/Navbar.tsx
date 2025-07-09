@@ -96,10 +96,7 @@ export default function Navbar({ currentPage }: NavbarProps) {
               </>
             )}
 
-            {/* 如果不是管理员但已登录，显示提示 */}
-            {currentUser && currentUser.role !== 'admin' && (
-              <span className="text-xs text-gray-500 font-medium">普通用户</span>
-            )}
+
 
             {/* 用户信息和退出 */}
             <div className="flex items-center space-x-3 border-l border-gray-200 pl-4">
