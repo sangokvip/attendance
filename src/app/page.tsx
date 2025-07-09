@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { EmployeeService } from '@/lib/database'
 import { Employee } from '@/lib/supabase'
 import { AuthService } from '@/lib/auth'
+import { IncomeStatsService, UserIncomeStats, IncomeStats } from '@/lib/income-stats'
 import AuthGuard from '@/components/AuthGuard'
 import Navbar from '@/components/Navbar'
 
@@ -12,10 +13,15 @@ export default function Home() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userIncomeStats, setUserIncomeStats] = useState<UserIncomeStats | null>(null)
+  const [todayStats, setTodayStats] = useState<IncomeStats | null>(null)
+  const [monthStats, setMonthStats] = useState<IncomeStats | null>(null)
+  const [incomeLoading, setIncomeLoading] = useState(true)
 
   useEffect(() => {
     loadEmployees()
     checkAdminStatus()
+    loadIncomeStats()
   }, [])
 
   const loadEmployees = async () => {
@@ -31,6 +37,33 @@ export default function Home() {
 
   const checkAdminStatus = () => {
     setIsAdmin(AuthService.isAdmin())
+  }
+
+  const loadIncomeStats = async () => {
+    try {
+      setIncomeLoading(true)
+      const [userStats, todayData, monthData] = await Promise.all([
+        IncomeStatsService.getCurrentUserIncomeStats(),
+        IncomeStatsService.getTodayIncomeStats(),
+        IncomeStatsService.getThisMonthIncomeStats()
+      ])
+      setUserIncomeStats(userStats)
+      setTodayStats(todayData)
+      setMonthStats(monthData)
+    } catch (error) {
+      console.error('加载收入统计失败:', error)
+    } finally {
+      setIncomeLoading(false)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
   }
 
   return (
@@ -102,6 +135,162 @@ export default function Home() {
             </div>
           </div>
 
+          {/* 收入统计 */}
+          <div className="mb-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">收入统计</h3>
+            {incomeLoading ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <div className="ml-2 text-gray-600">加载收入数据中...</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* 当前用户Peter收入 */}
+                <div className="bg-blue-50 overflow-hidden shadow rounded-lg border border-blue-200">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">P</span>
+                        </div>
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-blue-600 truncate">我的总收入 (Peter)</dt>
+                          <dd className="text-xl font-bold text-blue-900">
+                            {userIncomeStats ? formatCurrency(userIncomeStats.userPeterCommission) : '¥0'}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 所有员工总收入 */}
+                <div className="bg-green-50 overflow-hidden shadow rounded-lg border border-green-200">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">员</span>
+                        </div>
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-green-600 truncate">员工总收入</dt>
+                          <dd className="text-xl font-bold text-green-900">
+                            {userIncomeStats ? formatCurrency(userIncomeStats.totalEmployeeSalary) : '¥0'}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Adam收入 - 只有管理员可见 */}
+                {isAdmin && userIncomeStats?.totalAdamIncome !== undefined && (
+                  <div className="bg-purple-50 overflow-hidden shadow rounded-lg border border-purple-200">
+                    <div className="p-5">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm font-medium">A</span>
+                          </div>
+                        </div>
+                        <div className="ml-5 w-0 flex-1">
+                          <dl>
+                            <dt className="text-sm font-medium text-purple-600 truncate">Adam总收入</dt>
+                            <dd className="text-xl font-bold text-purple-900">
+                              {formatCurrency(userIncomeStats.totalAdamIncome)}
+                            </dd>
+                          </dl>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 本月统计 */}
+                <div className="bg-orange-50 overflow-hidden shadow rounded-lg border border-orange-200">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">月</span>
+                        </div>
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-orange-600 truncate">本月客人数</dt>
+                          <dd className="text-xl font-bold text-orange-900">
+                            {monthStats ? monthStats.totalClients : 0} 人次
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 今日和本月对比 */}
+            {!incomeLoading && todayStats && monthStats && (
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">今日 vs 本月统计</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">今日数据</h5>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">客人数:</span>
+                          <span className="text-sm font-medium">{todayStats.totalClients} 人次</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">员工收入:</span>
+                          <span className="text-sm font-medium">{formatCurrency(todayStats.totalEmployeeSalary)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Peter收入:</span>
+                          <span className="text-sm font-medium">{formatCurrency(todayStats.totalPeterCommission)}</span>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Adam收入:</span>
+                            <span className="text-sm font-medium">{formatCurrency(todayStats.totalAdamIncome)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">本月累计</h5>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">客人数:</span>
+                          <span className="text-sm font-medium">{monthStats.totalClients} 人次</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">员工收入:</span>
+                          <span className="text-sm font-medium">{formatCurrency(monthStats.totalEmployeeSalary)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Peter收入:</span>
+                          <span className="text-sm font-medium">{formatCurrency(monthStats.totalPeterCommission)}</span>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Adam收入:</span>
+                            <span className="text-sm font-medium">{formatCurrency(monthStats.totalAdamIncome)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* 员工概览 */}
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
@@ -115,10 +304,20 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {employees.map((employee) => (
                     <div key={employee.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="font-medium text-gray-900">{employee.name}</div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium text-gray-900">{employee.name}</div>
+                        {employee.template && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {employee.template.name}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-500">
                         加入时间: {new Date(employee.created_at).toLocaleDateString()}
                       </div>
+                      {!employee.template && (
+                        <div className="text-xs text-gray-400 mt-1">使用全局设置</div>
+                      )}
                     </div>
                   ))}
                 </div>
