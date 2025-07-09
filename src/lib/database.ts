@@ -1,40 +1,56 @@
 import { supabase, Employee, Attendance } from './supabase'
 import { calculateSalaryWithSettings } from './settings'
+import { calculateSalaryWithTemplate } from './salary-calculator'
 
 // 员工相关操作
 export class EmployeeService {
-  // 获取所有员工
+  // 获取所有员工（包含模板信息）
   static async getAll(): Promise<Employee[]> {
     const { data, error } = await supabase
       .from('employees')
-      .select('*')
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
       .order('name')
-    
+
     if (error) throw error
     return data || []
   }
 
   // 添加员工
-  static async create(name: string): Promise<Employee> {
+  static async create(name: string, templateId?: number): Promise<Employee> {
     const { data, error } = await supabase
       .from('employees')
-      .insert({ name })
-      .select()
+      .insert({
+        name,
+        template_id: templateId || null
+      })
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
       .single()
-    
+
     if (error) throw error
     return data
   }
 
   // 更新员工
-  static async update(id: number, name: string): Promise<Employee> {
+  static async update(id: number, name: string, templateId?: number): Promise<Employee> {
     const { data, error } = await supabase
       .from('employees')
-      .update({ name })
+      .update({
+        name,
+        template_id: templateId !== undefined ? templateId : undefined
+      })
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
       .single()
-    
+
     if (error) throw error
     return data
   }
@@ -118,8 +134,25 @@ export class AttendanceService {
 
   // 创建或更新考勤记录
   static async upsert(employeeId: number, date: string, isWorking: boolean, clientCount: number, userId?: number): Promise<Attendance> {
-    // 计算工资（使用数据库中的设置）
-    const calculation = await calculateSalaryWithSettings(clientCount, isWorking)
+    // 获取员工信息（包含模板）
+    const { data: employee, error: employeeError } = await supabase
+      .from('employees')
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
+      .eq('id', employeeId)
+      .single()
+
+    if (employeeError) throw employeeError
+
+    // 计算工资（优先使用员工模板，否则使用全局设置）
+    let calculation
+    if (employee.template) {
+      calculation = calculateSalaryWithTemplate(clientCount, isWorking, employee.template)
+    } else {
+      calculation = await calculateSalaryWithSettings(clientCount, isWorking)
+    }
     
     const attendanceData: Record<string, unknown> = {
       employee_id: employeeId,

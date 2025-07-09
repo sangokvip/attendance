@@ -1,4 +1,4 @@
-import { BUSINESS_RULES } from './supabase'
+import { BUSINESS_RULES, SettingsTemplate } from './supabase'
 
 export interface SalaryCalculation {
   baseSalary: number
@@ -9,7 +9,7 @@ export interface SalaryCalculation {
 }
 
 /**
- * 计算员工工资和相关费用
+ * 计算员工工资和相关费用（使用全局设置）
  * @param clientCount 陪客次数
  * @param isWorking 是否上班
  * @returns 工资计算结果
@@ -50,6 +50,66 @@ export function calculateSalary(clientCount: number, isWorking: boolean): Salary
   const totalSalary = baseSalary + commission
 
   // 老板利润计算
+  const totalRevenue = clientCount * BUSINESS_RULES.CLIENT_PAYMENT
+  const totalKtvFee = clientCount * BUSINESS_RULES.KTV_FEE
+  const bossProfit = totalRevenue - totalKtvFee - totalSalary - peterCommission
+
+  return {
+    baseSalary,
+    commission,
+    totalSalary,
+    peterCommission,
+    bossProfit
+  }
+}
+
+/**
+ * 根据员工模板计算工资和相关费用
+ * @param clientCount 陪客次数
+ * @param isWorking 是否上班
+ * @param template 员工的费用模板
+ * @returns 工资计算结果
+ */
+export function calculateSalaryWithTemplate(
+  clientCount: number,
+  isWorking: boolean,
+  template: SettingsTemplate
+): SalaryCalculation {
+  // 如果没有上班，所有费用为0
+  if (!isWorking) {
+    return {
+      baseSalary: 0,
+      commission: 0,
+      totalSalary: 0,
+      peterCommission: 0,
+      bossProfit: 0
+    }
+  }
+
+  // 基本工资计算（使用模板数据）
+  const baseSalary = clientCount > 0
+    ? template.template_data.base_salary
+    : template.template_data.no_client_salary
+
+  // 提成计算（使用模板数据）
+  let commission = 0
+  let peterCommission = 0
+
+  if (clientCount > 0) {
+    // 第一次陪客
+    commission += template.template_data.first_client_bonus
+    peterCommission += template.template_data.peter_first_client
+
+    // 第二次及以后陪客
+    if (clientCount > 1) {
+      commission += (clientCount - 1) * template.template_data.additional_client_bonus
+      peterCommission += (clientCount - 1) * template.template_data.peter_additional_client
+    }
+  }
+
+  const totalSalary = baseSalary + commission
+
+  // 老板利润计算（使用全局设置）
   const totalRevenue = clientCount * BUSINESS_RULES.CLIENT_PAYMENT
   const totalKtvFee = clientCount * BUSINESS_RULES.KTV_FEE
   const bossProfit = totalRevenue - totalKtvFee - totalSalary - peterCommission

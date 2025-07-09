@@ -2,21 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { EmployeeService } from '@/lib/database'
-import { Employee } from '@/lib/supabase'
+import { Employee, SettingsTemplate } from '@/lib/supabase'
+import { SettingsTemplateService } from '@/lib/settings-templates'
+import { AuthService } from '@/lib/auth'
 import AuthGuard from '@/components/AuthGuard'
 import Navbar from '@/components/Navbar'
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [templates, setTemplates] = useState<SettingsTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
   const [newEmployeeName, setNewEmployeeName] = useState('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null)
   const [error, setError] = useState('')
+  const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser())
 
   useEffect(() => {
     loadEmployees()
+    loadTemplates()
   }, [])
+
+  const loadTemplates = async () => {
+    try {
+      const templatesData = await SettingsTemplateService.getAll(currentUser?.id)
+      setTemplates(templatesData)
+    } catch (error) {
+      console.error('加载模板失败:', error)
+    }
+  }
 
   const loadEmployees = async () => {
     try {
@@ -39,8 +54,9 @@ export default function EmployeesPage() {
     }
 
     try {
-      await EmployeeService.create(newEmployeeName.trim())
+      await EmployeeService.create(newEmployeeName.trim(), selectedTemplateId || undefined)
       setNewEmployeeName('')
+      setSelectedTemplateId(null)
       setShowAddForm(false)
       setError('')
       await loadEmployees()
@@ -64,9 +80,10 @@ export default function EmployeesPage() {
     }
 
     try {
-      await EmployeeService.update(editingEmployee.id, newEmployeeName.trim())
+      await EmployeeService.update(editingEmployee.id, newEmployeeName.trim(), selectedTemplateId || undefined)
       setEditingEmployee(null)
       setNewEmployeeName('')
+      setSelectedTemplateId(null)
       setError('')
       await loadEmployees()
     } catch (error: unknown) {
@@ -98,6 +115,7 @@ export default function EmployeesPage() {
   const startEdit = (employee: Employee) => {
     setEditingEmployee(employee)
     setNewEmployeeName(employee.name)
+    setSelectedTemplateId(employee.template_id)
     setShowAddForm(false)
     setError('')
   }
@@ -105,6 +123,7 @@ export default function EmployeesPage() {
   const cancelEdit = () => {
     setEditingEmployee(null)
     setNewEmployeeName('')
+    setSelectedTemplateId(null)
     setError('')
   }
 
@@ -112,6 +131,7 @@ export default function EmployeesPage() {
     setShowAddForm(true)
     setEditingEmployee(null)
     setNewEmployeeName('')
+    setSelectedTemplateId(null)
     setError('')
   }
 
@@ -150,8 +170,8 @@ export default function EmployeesPage() {
                   {editingEmployee ? '编辑员工' : '添加新员工'}
                 </h3>
                 <form onSubmit={editingEmployee ? handleEditEmployee : handleAddEmployee}>
-                  <div className="flex gap-4 items-end">
-                    <div className="flex-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
                       <label htmlFor="employeeName" className="block text-sm font-medium text-gray-700 mb-1">
                         员工姓名
                       </label>
@@ -165,21 +185,46 @@ export default function EmployeesPage() {
                         required
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        {editingEmployee ? '更新' : '添加'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={editingEmployee ? cancelEdit : () => setShowAddForm(false)}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        取消
-                      </button>
-                    </div>
+
+                    {/* 模板选择 - 只有管理员可以编辑 */}
+                    {currentUser?.role === 'admin' && (
+                      <div>
+                        <label htmlFor="templateSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                          费用模板
+                        </label>
+                        <select
+                          id="templateSelect"
+                          value={selectedTemplateId || ''}
+                          onChange={(e) => setSelectedTemplateId(e.target.value ? Number(e.target.value) : null)}
+                          className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        >
+                          <option value="">使用全局设置</option>
+                          {templates.map((template) => (
+                            <option key={template.id} value={template.id}>
+                              {template.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">
+                          选择该员工使用的费用模板，不选择则使用全局设置
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                    <button
+                      type="submit"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      {editingEmployee ? '更新' : '添加'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={editingEmployee ? cancelEdit : () => setShowAddForm(false)}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      取消
+                    </button>
                   </div>
                 </form>
               </div>
@@ -205,6 +250,9 @@ export default function EmployeesPage() {
                           姓名
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          费用模板
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           加入时间
                         </th>
                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -217,6 +265,15 @@ export default function EmployeesPage() {
                         <tr key={employee.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {employee.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {employee.template ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {employee.template.name}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">使用全局设置</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(employee.created_at).toLocaleDateString()}

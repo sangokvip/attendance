@@ -41,9 +41,11 @@ export interface Employee {
   id: number
   name: string
   last_salary_date: string | null
+  template_id: number | null
   user_id: number
   created_at: string
   updated_at: string
+  template?: SettingsTemplate
 }
 
 export interface Attendance {
