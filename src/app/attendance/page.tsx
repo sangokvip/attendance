@@ -108,6 +108,12 @@ export default function AttendancePage() {
                 报表统计
               </Link>
               <Link
+                href="/salary"
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                工资结算
+              </Link>
+              <Link
                 href="/settings"
                 className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >

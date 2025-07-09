@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AuthService } from '@/lib/auth'
 
 export default function LoginPage() {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -14,18 +16,26 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    // 检查密码
-    if (password === 'sangok') {
-      // 设置登录状态到localStorage
-      localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('authTime', Date.now().toString())
-      
+    try {
+      // 尝试用户登录
+      const user = await AuthService.login({ username, password })
+
+      // 设置用户登录状态
+      AuthService.setCurrentUser(user)
+
       // 跳转到首页
       router.push('/')
-    } else {
-      setError('密码错误，请重试')
+    } catch (error) {
+      // 如果用户登录失败，尝试旧的密码方式（向后兼容）
+      if (password === 'sangok') {
+        localStorage.setItem('isAuthenticated', 'true')
+        localStorage.setItem('authTime', Date.now().toString())
+        router.push('/')
+      } else {
+        setError(error instanceof Error ? error.message : '登录失败，请重试')
+      }
     }
-    
+
     setLoading(false)
   }
 
@@ -42,8 +52,27 @@ export default function LoginPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                用户名
+              </label>
+              <div className="mt-1">
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="请输入用户名"
+                />
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                访问密码
+                密码
               </label>
               <div className="mt-1">
                 <input
@@ -55,7 +84,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="请输入访问密码"
+                  placeholder="请输入密码"
                 />
               </div>
             </div>

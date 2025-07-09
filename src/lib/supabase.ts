@@ -6,10 +6,24 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // 数据库类型定义
+export interface User {
+  id: number
+  username: string
+  password_hash: string
+  display_name: string
+  role: 'admin' | 'user'
+  is_active: boolean
+  expires_at: string | null
+  created_at: string
+  updated_at: string
+  created_by: number | null
+}
+
 export interface Employee {
   id: number
   name: string
   last_salary_date: string | null
+  user_id: number
   created_at: string
   updated_at: string
 }
@@ -35,6 +49,7 @@ export interface Setting {
   key: string
   value: number
   description: string
+  user_id: number | null
   created_at: string
   updated_at: string
 }
