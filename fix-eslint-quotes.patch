@@ -1,0 +1,11 @@
+--- a/src/app/settings/page.tsx
++++ b/src/app/settings/page.tsx
+@@ -288,7 +288,7 @@
+                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                   <div className="text-gray-500 mb-2">还没有保存的模板</div>
+                   <div className="text-sm text-gray-400">
+-                    调整好费用设置后，点击"保存为模板"来保存当前配置
++                    调整好费用设置后，点击&ldquo;保存为模板&rdquo;来保存当前配置
+                   </div>
+                 </div>
+               )}
