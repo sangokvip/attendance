@@ -9,11 +9,12 @@ export class SettingsTemplateService {
       .eq('is_global', false) // 只获取用户自定义模板
       .order('created_at', { ascending: false })
 
-    if (userId) {
+    if (userId && userId > 0) {
+      // 只有有效的用户ID才查询用户模板
       query = query.eq('user_id', userId)
     } else {
-      // 如果没有用户ID，返回空数组（不显示任何模板）
-      return []
+      // 对于临时管理员（ID=0）或无用户ID，查询user_id为null的模板
+      query = query.is('user_id', null)
     }
 
     const { data, error } = await query
@@ -217,7 +218,7 @@ export class SettingsTemplateService {
       name,
       description,
       template_data: templateData,
-      user_id: userId,
+      user_id: (userId && userId > 0) ? userId : null, // 临时管理员保存为全局模板
       is_global: false
     })
   }
