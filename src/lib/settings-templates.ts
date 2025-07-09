@@ -142,7 +142,7 @@ export class SettingsTemplateService {
 
     // 更新设置
     for (const setting of settingsData) {
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         key: setting.key,
         value: setting.value
       }
@@ -196,7 +196,7 @@ export class SettingsTemplateService {
     // 从设置中更新模板数据
     settings?.forEach(setting => {
       if (setting.key in templateData) {
-        (templateData as any)[setting.key] = setting.value
+        (templateData as Record<string, number>)[setting.key] = setting.value
       }
     })
 
