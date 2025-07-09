@@ -83,12 +83,18 @@ export default function SettingsPage() {
     try {
       setSaving(true)
       const currentUser = AuthService.getCurrentUser()
+      console.log('当前用户:', currentUser) // 调试信息
       await SettingsTemplateService.createFromCurrentSettings(
         templateName.trim(),
         templateDescription.trim(),
         currentUser?.id
       )
+      // 强制刷新模板列表
       await loadTemplates()
+      // 再次刷新确保显示
+      setTimeout(async () => {
+        await loadTemplates()
+      }, 1000)
       setShowTemplateModal(false)
       setTemplateName('')
       setTemplateDescription('')
@@ -96,7 +102,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccess(''), 3000)
     } catch (error) {
       console.error('保存模板失败:', error)
-      setError('保存模板失败')
+      setError(`保存模板失败: ${error instanceof Error ? error.message : '未知错误'}`)
     } finally {
       setSaving(false)
     }
