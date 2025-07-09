@@ -121,7 +121,7 @@ export class AttendanceService {
     // 计算工资（使用数据库中的设置）
     const calculation = await calculateSalaryWithSettings(clientCount, isWorking)
     
-    const attendanceData = {
+    const attendanceData: any = {
       employee_id: employeeId,
       date,
       is_working: isWorking,
@@ -130,9 +130,13 @@ export class AttendanceService {
       commission: calculation.commission,
       peter_commission: calculation.peterCommission,
       total_salary: calculation.totalSalary,
-      boss_profit: calculation.bossProfit,
-      created_by_user_id: userId,
-      updated_by_user_id: userId
+      boss_profit: calculation.bossProfit
+    }
+
+    // 只有在提供userId时才添加用户追踪字段（避免数据库字段不存在的错误）
+    if (userId) {
+      attendanceData.created_by_user_id = userId
+      attendanceData.updated_by_user_id = userId
     }
 
     const { data, error } = await supabase
