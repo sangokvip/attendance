@@ -88,7 +88,7 @@ export default function AttendanceChart({ attendances, days, title }: Attendance
                   <th className="border border-gray-300 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
                     员工
                   </th>
-                  {dates.map((date, index) => {
+                  {dates.map((date) => {
                     const dateObj = new Date(date)
                     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6
                     return (

@@ -16,7 +16,6 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [recentAttendance, setRecentAttendance] = useState<Attendance[]>([])
-  const [showAttendanceDetails, setShowAttendanceDetails] = useState(true)
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
