@@ -21,7 +21,6 @@ export interface UserIncomeStats {
 export class IncomeStatsService {
   // 获取当前用户的收入统计
   static async getCurrentUserIncomeStats(): Promise<UserIncomeStats> {
-    const currentUser = AuthService.getCurrentUser()
     const isAdmin = AuthService.isAdmin()
     
     // 获取从系统开始到现在的所有考勤记录
@@ -85,7 +84,13 @@ export class IncomeStatsService {
   }
 
   // 从考勤记录计算收入统计
-  private static calculateIncomeFromAttendances(attendances: any[]): Omit<IncomeStats, 'startDate' | 'endDate'> {
+  private static calculateIncomeFromAttendances(attendances: Array<{
+    total_salary?: number | string
+    peter_commission?: number | string
+    boss_profit?: number | string
+    client_count: number
+    is_working: boolean
+  }>): Omit<IncomeStats, 'startDate' | 'endDate'> {
     return attendances.reduce((totals, attendance) => {
       return {
         totalEmployeeSalary: totals.totalEmployeeSalary + Number(attendance.total_salary || 0),
@@ -114,18 +119,24 @@ export class IncomeStatsService {
         *,
         template:settings_templates(*)
       `)
-    
+
     if (employeeError) throw employeeError
-    
+
     // 获取所有考勤记录
     const { data: attendances, error: attendanceError } = await supabase
       .from('attendance')
       .select('*')
       .order('date', { ascending: false })
-    
+
     if (attendanceError) throw attendanceError
-    
-    const templateStats: { [templateName: string]: any[] } = {}
+
+    const templateStats: { [templateName: string]: Array<{
+      total_salary?: number | string
+      peter_commission?: number | string
+      boss_profit?: number | string
+      client_count: number
+      is_working: boolean
+    }> } = {}
     
     // 按员工模板分组考勤记录
     attendances?.forEach(attendance => {
