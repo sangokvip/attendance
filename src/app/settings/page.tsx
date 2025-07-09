@@ -2,21 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { SettingsService } from '@/lib/settings'
-import { Setting } from '@/lib/supabase'
+import { Setting, SettingsTemplate } from '@/lib/supabase'
+import { SettingsTemplateService } from '@/lib/settings-templates'
+import { AuthService } from '@/lib/auth'
 import { formatCurrency } from '@/lib/salary-calculator'
 import AuthGuard from '@/components/AuthGuard'
 import Navbar from '@/components/Navbar'
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Setting[]>([])
+  const [templates, setTemplates] = useState<SettingsTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templateDescription, setTemplateDescription] = useState('')
   const [editedValues, setEditedValues] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
     loadSettings()
+    loadTemplates()
   }, [])
 
   const loadSettings = async () => {
@@ -36,6 +43,79 @@ export default function SettingsPage() {
       setError('加载设置失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTemplates = async () => {
+    try {
+      const currentUser = AuthService.getCurrentUser()
+      const data = await SettingsTemplateService.getAll(currentUser?.id)
+      setTemplates(data)
+    } catch (error) {
+      console.error('加载模板失败:', error)
+    }
+  }
+
+  const applyTemplate = async (templateId: number) => {
+    if (!confirm('确定要应用此模板吗？这将覆盖当前的费用设置。')) return
+
+    try {
+      setSaving(true)
+      const currentUser = AuthService.getCurrentUser()
+      await SettingsTemplateService.applyTemplate(templateId, currentUser?.id)
+      await loadSettings()
+      setSuccess('模板应用成功')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('应用模板失败:', error)
+      setError('应用模板失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveAsTemplate = async () => {
+    if (!templateName.trim()) {
+      setError('请输入模板名称')
+      return
+    }
+
+    try {
+      setSaving(true)
+      const currentUser = AuthService.getCurrentUser()
+      await SettingsTemplateService.createFromCurrentSettings(
+        templateName.trim(),
+        templateDescription.trim(),
+        currentUser?.id
+      )
+      await loadTemplates()
+      setShowTemplateModal(false)
+      setTemplateName('')
+      setTemplateDescription('')
+      setSuccess('模板保存成功')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('保存模板失败:', error)
+      setError('保存模板失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteTemplate = async (templateId: number) => {
+    if (!confirm('确定要删除此模板吗？')) return
+
+    try {
+      setSaving(true)
+      await SettingsTemplateService.delete(templateId)
+      await loadTemplates()
+      setSuccess('模板删除成功')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('删除模板失败:', error)
+      setError('删除模板失败')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -116,6 +196,13 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-gray-900">系统设置</h1>
             <div className="flex space-x-3">
               <button
+                onClick={() => setShowTemplateModal(true)}
+                disabled={saving}
+                className="inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                保存为模板
+              </button>
+              <button
                 onClick={handleReset}
                 disabled={!hasChanges || saving}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -131,6 +218,54 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
+
+          {/* 费用模板 */}
+          {templates.length > 0 && (
+            <div className="bg-white shadow rounded-lg mb-6">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">费用模板</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map((template) => (
+                    <div key={template.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{template.name}</h4>
+                          {template.description && (
+                            <p className="text-sm text-gray-600 mt-1">{template.description}</p>
+                          )}
+                          {template.is_global && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+                              系统模板
+                            </span>
+                          )}
+                        </div>
+                        {!template.is_global && (
+                          <button
+                            onClick={() => deleteTemplate(template.id)}
+                            disabled={saving}
+                            className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-3">
+                        基本工资: {formatCurrency(template.template_data.base_salary)} |
+                        首客提成: {formatCurrency(template.template_data.first_client_bonus)}
+                      </div>
+                      <button
+                        onClick={() => applyTemplate(template.id)}
+                        disabled={saving}
+                        className="w-full inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {saving ? '应用中...' : '应用模板'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 提示信息 */}
           {error && (
@@ -208,6 +343,64 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
+
+      {/* 保存模板模态框 */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">保存为模板</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    模板名称 *
+                  </label>
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="请输入模板名称"
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    模板描述
+                  </label>
+                  <textarea
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    placeholder="请输入模板描述（可选）"
+                    rows={3}
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowTemplateModal(false)
+                    setTemplateName('')
+                    setTemplateDescription('')
+                    setError('')
+                  }}
+                  disabled={saving}
+                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={saveAsTemplate}
+                  disabled={saving || !templateName.trim()}
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? '保存中...' : '保存模板'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </AuthGuard>
   )

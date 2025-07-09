@@ -19,6 +19,24 @@ export interface User {
   created_by: number | null
 }
 
+export interface SettingsTemplate {
+  id: number
+  name: string
+  description: string | null
+  template_data: {
+    base_salary: number
+    first_client_bonus: number
+    additional_client_bonus: number
+    no_client_salary: number
+    peter_first_client: number
+    peter_additional_client: number
+  }
+  user_id: number | null
+  is_global: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface Employee {
   id: number
   name: string

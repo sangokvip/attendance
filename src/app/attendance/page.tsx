@@ -83,14 +83,14 @@ export default function AttendancePage() {
 
   // 一键全上班
   const handleAllWork = async () => {
-    if (!confirm('确定要将所有员工设置为上班状态吗？')) return
+    if (!confirm('确定要将所有员工设置为上班状态（1个客人）吗？')) return
 
     try {
       setSaving(true)
       const currentUser = AuthService.getCurrentUser()
 
       for (const employee of employees) {
-        await AttendanceService.upsert(employee.id, selectedDate, true, 0, currentUser?.id)
+        await AttendanceService.upsert(employee.id, selectedDate, true, 1, currentUser?.id)
       }
 
       await loadData()
@@ -270,7 +270,7 @@ export default function AttendancePage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">老板利润</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Adam收入</dt>
                       <dd className="text-lg font-medium text-gray-900">{formatCurrency(dayTotals.totalBossProfit)}</dd>
                     </dl>
                   </div>

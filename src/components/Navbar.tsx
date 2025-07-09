@@ -66,9 +66,12 @@ export default function Navbar({ currentPage }: NavbarProps) {
             <Link href="/salary" className={getLinkClass('salary', 'orange')}>
               工资结算
             </Link>
-            <Link href="/settings" className={getLinkClass('settings', 'orange')}>
-              系统设置
-            </Link>
+            {/* 系统设置 - 仅管理员可见 */}
+            {currentUser?.role === 'admin' && (
+              <Link href="/settings" className={getLinkClass('settings', 'orange')}>
+                系统设置
+              </Link>
+            )}
 
             {/* 调试信息 - 临时显示 */}
             {process.env.NODE_ENV === 'development' && (
@@ -198,17 +201,20 @@ export default function Navbar({ currentPage }: NavbarProps) {
               >
                 工资结算
               </Link>
-              <Link
-                href="/settings"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  currentPage === 'settings'
-                    ? 'text-orange-600 bg-orange-50'
-                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                系统设置
-              </Link>
+              {/* 系统设置 - 仅管理员可见 */}
+              {currentUser?.role === 'admin' && (
+                <Link
+                  href="/settings"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    currentPage === 'settings'
+                      ? 'text-orange-600 bg-orange-50'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  系统设置
+                </Link>
+              )}
 
               {/* 管理员专用链接 - 移动端 */}
               {currentUser?.role === 'admin' && (
