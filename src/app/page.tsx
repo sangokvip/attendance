@@ -49,6 +49,17 @@ export default function Home() {
               <p className="text-gray-600 mb-4">
                 管理员工考勤，自动计算工资和利润，让您的业务管理更加高效。
               </p>
+
+              {/* 调试信息 - 临时显示 */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-yellow-800 mb-2">调试信息：</h3>
+                  <div className="text-xs text-yellow-700">
+                    <div>是否为管理员: {isAdmin ? '是' : '否'}</div>
+                    <div>当前用户: {typeof window !== 'undefined' ? localStorage.getItem('currentUser') : '服务端渲染'}</div>
+                  </div>
+                </div>
+              )}
               <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
                 <Link
                   href="/employees"
@@ -83,8 +94,8 @@ export default function Home() {
                     href="/admin/users"
                     className="bg-red-50 hover:bg-red-100 p-4 rounded-lg border border-red-200 transition-colors"
                   >
-                    <div className="text-red-600 font-medium">用户管理</div>
-                    <div className="text-red-500 text-sm">管理系统用户账户</div>
+                    <div className="text-red-600 font-medium">🔧 用户管理</div>
+                    <div className="text-red-500 text-sm">管理系统用户账户（管理员专用）</div>
                   </Link>
                 )}
               </div>

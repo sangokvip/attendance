@@ -70,6 +70,15 @@ export default function Navbar({ currentPage }: NavbarProps) {
               系统设置
             </Link>
 
+            {/* 调试信息 - 临时显示 */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">
+                用户: {currentUser?.displayName || '未登录'} |
+                角色: {currentUser?.role || '无'} |
+                是否管理员: {currentUser?.role === 'admin' ? '是' : '否'}
+              </div>
+            )}
+
             {/* 管理员专用链接 */}
             {currentUser?.role === 'admin' && (
               <>
@@ -79,6 +88,11 @@ export default function Navbar({ currentPage }: NavbarProps) {
                 <div className="border-l border-gray-200 h-6"></div>
                 <span className="text-xs text-gray-500 font-medium">管理员</span>
               </>
+            )}
+
+            {/* 如果不是管理员但已登录，显示提示 */}
+            {currentUser && currentUser.role !== 'admin' && (
+              <span className="text-xs text-gray-500 font-medium">普通用户</span>
             )}
 
             {/* 用户信息和退出 */}

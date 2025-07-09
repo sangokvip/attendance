@@ -28,8 +28,17 @@ export default function LoginPage() {
     } catch (error) {
       // 如果用户登录失败，尝试旧的密码方式（向后兼容）
       if (password === 'sangok') {
-        localStorage.setItem('isAuthenticated', 'true')
-        localStorage.setItem('authTime', Date.now().toString())
+        // 创建临时管理员用户信息
+        const tempAdminUser = {
+          id: 0,
+          username: 'temp_admin',
+          displayName: '临时管理员',
+          role: 'admin' as const,
+          isActive: true,
+          expiresAt: null
+        }
+
+        AuthService.setCurrentUser(tempAdminUser)
         router.push('/')
       } else {
         setError(error instanceof Error ? error.message : '登录失败，请重试')
