@@ -39,9 +39,13 @@ export interface Attendance {
   peter_commission: number
   total_salary: number
   boss_profit: number
+  created_by_user_id: number | null
+  updated_by_user_id: number | null
   created_at: string
   updated_at: string
   employee?: Employee
+  created_by_user?: User
+  updated_by_user?: User
 }
 
 export interface Setting {

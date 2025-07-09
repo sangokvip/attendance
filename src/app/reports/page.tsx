@@ -13,6 +13,8 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<ReportPeriod>('month')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [recentAttendance, setRecentAttendance] = useState<any[]>([])
+  const [showAttendanceDetails, setShowAttendanceDetails] = useState(true)
   const [attendances, setAttendances] = useState<Attendance[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -48,6 +50,7 @@ export default function ReportsPage() {
     if (startDate && endDate) {
       loadReportData()
     }
+    loadRecentAttendance()
   }, [startDate, endDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadReportData = async () => {
@@ -61,6 +64,23 @@ export default function ReportsPage() {
       setError('加载报表数据失败')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadRecentAttendance = async () => {
+    try {
+      // 获取过去10天的考勤记录
+      const today = new Date()
+      const tenDaysAgo = new Date(today)
+      tenDaysAgo.setDate(today.getDate() - 10)
+
+      const startDateStr = tenDaysAgo.toISOString().split('T')[0]
+      const endDateStr = today.toISOString().split('T')[0]
+
+      const data = await AttendanceService.getByDateRange(startDateStr, endDateStr)
+      setRecentAttendance(data)
+    } catch (error) {
+      console.error('加载最近考勤记录失败:', error)
     }
   }
 
@@ -154,7 +174,7 @@ export default function ReportsPage() {
     csvContent += `KTV费用,${totals.totalKtvFee}\n`
     csvContent += `员工工资,${totals.totalSalary}\n`
     csvContent += `Peter收入,${totals.totalPeterCommission}\n`
-    csvContent += `老板利润,${totals.totalBossProfit}\n`
+    csvContent += `Adam收入,${totals.totalBossProfit}\n`
     csvContent += `陪客总次数,${totals.totalClients}\n`
     csvContent += `工作天数,${totals.workingDays}\n\n`
     
@@ -166,7 +186,7 @@ export default function ReportsPage() {
     })
     
     csvContent += "\n日统计\n"
-    csvContent += "日期,上班员工,陪客次数,员工工资,老板利润\n"
+    csvContent += "日期,上班员工,陪客次数,员工工资,Adam收入\n"
     dailyStats.forEach(day => {
       csvContent += `${day.date},${day.workingEmployees},${day.totalClients},${day.totalSalary},${day.totalBossProfit}\n`
     })
@@ -324,7 +344,7 @@ export default function ReportsPage() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">老板利润</dt>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Adam收入</dt>
                           <dd className={`text-lg font-medium ${totals.totalBossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatCurrency(totals.totalBossProfit)}
                           </dd>
@@ -407,6 +427,101 @@ export default function ReportsPage() {
                       <p className="text-gray-500 text-center py-4">暂无数据</p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* 最近考勤记录详情 */}
+              <div className="bg-white shadow rounded-lg mt-6">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">最近10天考勤记录</h3>
+                    <button
+                      onClick={() => setShowAttendanceDetails(!showAttendanceDetails)}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      {showAttendanceDetails ? '隐藏详情' : '显示详情'}
+                    </button>
+                  </div>
+
+                  {showAttendanceDetails && (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">员工</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">状态</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">陪客次数</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">基本工资</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">总工资</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {recentAttendance
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .map((attendance, index) => (
+                            <tr key={index} className={`hover:bg-gray-50 ${
+                              attendance.is_working
+                                ? attendance.client_count > 0
+                                  ? 'bg-green-25'
+                                  : 'bg-blue-25'
+                                : 'bg-gray-25'
+                            }`}>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {attendance.employee?.name || '未知员工'}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {new Date(attendance.date).toLocaleDateString()}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(attendance.date).toLocaleDateString('zh-CN', { weekday: 'short' })}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-center">
+                                {attendance.is_working ? (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    上班
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    未上班
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-center">
+                                <div className="text-sm text-gray-900">
+                                  {attendance.client_count > 0 ? (
+                                    <span className="font-medium text-green-600">{attendance.client_count}</span>
+                                  ) : (
+                                    <span className="text-gray-400">0</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-center">
+                                <div className="text-sm text-gray-900">
+                                  {formatCurrency(attendance.base_salary)}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-center">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {formatCurrency(attendance.total_salary)}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      {recentAttendance.length === 0 && (
+                        <div className="text-center py-8">
+                          <div className="text-gray-500">最近10天没有考勤记录</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

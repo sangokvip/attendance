@@ -6,6 +6,7 @@ import { EmployeeService, AttendanceService } from '@/lib/database'
 import { Employee, Attendance } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/salary-calculator'
 import { calculateSalaryWithSettings } from '@/lib/settings'
+import { AuthService } from '@/lib/auth'
 import AuthGuard from '@/components/AuthGuard'
 import Navbar from '@/components/Navbar'
 
@@ -45,7 +46,8 @@ export default function AttendancePage() {
   const handleAttendanceChange = async (employeeId: number, isWorking: boolean, clientCount: number) => {
     try {
       setSaving(true)
-      await AttendanceService.upsert(employeeId, selectedDate, isWorking, clientCount)
+      const currentUser = AuthService.getCurrentUser()
+      await AttendanceService.upsert(employeeId, selectedDate, isWorking, clientCount, currentUser?.id)
       // 重新加载数据以获取最新的计算结果
       await loadData()
       setError('')

@@ -85,6 +85,9 @@ export default function Navbar({ currentPage }: NavbarProps) {
                 <Link href="/admin/users" className={getLinkClass('admin', 'red')}>
                   用户管理
                 </Link>
+                <Link href="/admin/attendance-logs" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                  考勤记录
+                </Link>
                 <div className="border-l border-gray-200 h-6"></div>
                 <span className="text-xs text-gray-500 font-medium">管理员</span>
               </>
@@ -221,6 +224,13 @@ export default function Navbar({ currentPage }: NavbarProps) {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     用户管理
+                  </Link>
+                  <Link
+                    href="/admin/attendance-logs"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    考勤记录
                   </Link>
                   <div className="px-3 py-2">
                     <span className="text-xs text-gray-500 font-medium">管理员权限</span>

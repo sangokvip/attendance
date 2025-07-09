@@ -117,7 +117,7 @@ export class AttendanceService {
   }
 
   // 创建或更新考勤记录
-  static async upsert(employeeId: number, date: string, isWorking: boolean, clientCount: number): Promise<Attendance> {
+  static async upsert(employeeId: number, date: string, isWorking: boolean, clientCount: number, userId?: number): Promise<Attendance> {
     // 计算工资（使用数据库中的设置）
     const calculation = await calculateSalaryWithSettings(clientCount, isWorking)
     
@@ -130,7 +130,9 @@ export class AttendanceService {
       commission: calculation.commission,
       peter_commission: calculation.peterCommission,
       total_salary: calculation.totalSalary,
-      boss_profit: calculation.bossProfit
+      boss_profit: calculation.bossProfit,
+      created_by_user_id: userId,
+      updated_by_user_id: userId
     }
 
     const { data, error } = await supabase
