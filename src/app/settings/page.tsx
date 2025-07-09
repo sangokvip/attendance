@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { SettingsService } from '@/lib/settings'
 import { Setting } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/salary-calculator'

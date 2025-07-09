@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { EmployeeService } from '@/lib/database'
 import { Employee } from '@/lib/supabase'
 import AuthGuard from '@/components/AuthGuard'

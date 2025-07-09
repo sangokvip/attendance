@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { UserService, CreateUserData } from '@/lib/auth'
 import { User } from '@/lib/supabase'
 import AuthGuard from '@/components/AuthGuard'
