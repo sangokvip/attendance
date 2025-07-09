@@ -1,5 +1,6 @@
 import { supabase, Employee } from './supabase'
 import { SettingsService } from './settings'
+import { calculateSalaryWithTemplate } from './salary-calculator'
 
 export interface SalarySettlement {
   employee: Employee
@@ -35,10 +36,13 @@ export class SalarySettlementService {
   static async getEmployeeSettlement(employeeId: number): Promise<SalarySettlement> {
     const { data: employee, error } = await supabase
       .from('employees')
-      .select('*')
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
       .eq('id', employeeId)
       .single()
-    
+
     if (error) throw error
     return await this.calculateEmployeeSettlement(employee)
   }
@@ -53,7 +57,7 @@ export class SalarySettlementService {
       ? this.getNextDay(lastSalaryDate)
       : employee.created_at.split('T')[0]
     
-    const dailyRecords = await this.getDailyRecords(employee.id, startDate, today)
+    const dailyRecords = await this.getDailyRecords(employee, startDate, today)
     const unpaidBaseSalary = await this.calculateUnpaidBaseSalary(dailyRecords)
     const unpaidDays = this.calculateWorkingDays(dailyRecords)
     
@@ -67,12 +71,12 @@ export class SalarySettlementService {
     }
   }
 
-  // 获取员工的每日记录
-  private static async getDailyRecords(employeeId: number, startDate: string, endDate: string): Promise<DailyRecord[]> {
+  // 获取员工的每日记录（支持员工模板）
+  private static async getDailyRecords(employee: Employee, startDate: string, endDate: string): Promise<DailyRecord[]> {
     const { data: attendances, error } = await supabase
       .from('attendance')
       .select('*')
-      .eq('employee_id', employeeId)
+      .eq('employee_id', employee.id)
       .gte('date', startDate)
       .lte('date', endDate)
       .order('date')
@@ -89,12 +93,25 @@ export class SalarySettlementService {
       const attendance = attendances?.find(a => a.date === date)
       
       if (attendance) {
-        // 有考勤记录
+        // 有考勤记录，根据员工模板或全局设置计算工资
         const hasClients = attendance.client_count > 0
-        const baseSalary = hasClients 
-          ? rules.BASE_SALARY_WITH_CLIENT 
-          : (attendance.is_working ? rules.BASE_SALARY_NO_CLIENT : 0)
-        
+        let baseSalary = 0
+
+        if (employee.template) {
+          // 使用员工模板计算
+          const calculation = calculateSalaryWithTemplate(
+            attendance.client_count,
+            attendance.is_working,
+            employee.template
+          )
+          baseSalary = calculation.baseSalary
+        } else {
+          // 使用全局设置计算
+          baseSalary = hasClients
+            ? rules.BASE_SALARY_WITH_CLIENT
+            : (attendance.is_working ? rules.BASE_SALARY_NO_CLIENT : 0)
+        }
+
         records.push({
           date,
           isWorking: attendance.is_working,
@@ -125,13 +142,16 @@ export class SalarySettlementService {
     return dailyRecords.filter(record => record.isWorking).length
   }
 
-  // 获取员工信息（包含工资结算日期）
+  // 获取员工信息（包含工资结算日期和模板信息）
   private static async getEmployeesWithSalaryInfo(): Promise<Employee[]> {
     const { data, error } = await supabase
       .from('employees')
-      .select('*')
+      .select(`
+        *,
+        template:settings_templates(*)
+      `)
       .order('name')
-    
+
     if (error) throw error
     return data || []
   }

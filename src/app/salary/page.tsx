@@ -51,6 +51,26 @@ export default function SalaryPage() {
     return settlements.reduce((total, settlement) => total + settlement.unpaidBaseSalary, 0)
   }
 
+  // 按模板分组员工
+  const getGroupedSettlements = () => {
+    const groups: { [key: string]: SalarySettlement[] } = {}
+
+    settlements.forEach(settlement => {
+      const templateName = settlement.employee.template?.name || '全局设置'
+      if (!groups[templateName]) {
+        groups[templateName] = []
+      }
+      groups[templateName].push(settlement)
+    })
+
+    return groups
+  }
+
+  // 计算各模板的总工资
+  const getTemplateTotal = (templateSettlements: SalarySettlement[]) => {
+    return templateSettlements.reduce((total, settlement) => total + settlement.unpaidBaseSalary, 0)
+  }
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50">
@@ -80,22 +100,58 @@ export default function SalaryPage() {
             )}
 
             {/* 总计卡片 */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">总</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {/* 总计 */}
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">总</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">待发放工资总额</dt>
-                      <dd className="text-2xl font-bold text-red-600">{formatCurrency(getTotalUnpaidSalary())}</dd>
-                    </dl>
+                    <div className="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt className="text-sm font-medium text-gray-500 truncate">待发放工资总额</dt>
+                        <dd className="text-2xl font-bold text-red-600">{formatCurrency(getTotalUnpaidSalary())}</dd>
+                      </dl>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* 各模板分组总计 */}
+              {Object.entries(getGroupedSettlements()).map(([templateName, templateSettlements], index) => (
+                <div key={templateName} className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          templateName === '全局设置'
+                            ? 'bg-gray-500'
+                            : index % 2 === 0
+                              ? 'bg-blue-500'
+                              : 'bg-green-500'
+                        }`}>
+                          <span className="text-white text-xs font-medium">
+                            {templateName === '全局设置' ? '默' : templateName.charAt(0)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            {templateName} ({templateSettlements.length}人)
+                          </dt>
+                          <dd className="text-lg font-bold text-gray-900">
+                            {formatCurrency(getTemplateTotal(templateSettlements))}
+                          </dd>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* 工资结算列表 */}
@@ -109,14 +165,36 @@ export default function SalaryPage() {
                     <div className="mt-2 text-gray-600">加载中...</div>
                   </div>
                 ) : settlements.length > 0 ? (
-                  <div className="space-y-6">
-                    {settlements.map((settlement) => (
-                      <EmployeeSettlementCard
-                        key={settlement.employee.id}
-                        settlement={settlement}
-                        onUpdateSalaryDate={handleUpdateSalaryDate}
-                        updating={updating === settlement.employee.id}
-                      />
+                  <div className="space-y-8">
+                    {Object.entries(getGroupedSettlements()).map(([templateName, templateSettlements]) => (
+                      <div key={templateName} className="space-y-4">
+                        {/* 模板分组标题 */}
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                          <h4 className="text-lg font-medium text-gray-900 flex items-center">
+                            <span className={`w-3 h-3 rounded-full mr-2 ${
+                              templateName === '全局设置'
+                                ? 'bg-gray-500'
+                                : 'bg-blue-500'
+                            }`}></span>
+                            {templateName}
+                          </h4>
+                          <div className="text-sm text-gray-600">
+                            {templateSettlements.length} 人 · {formatCurrency(getTemplateTotal(templateSettlements))}
+                          </div>
+                        </div>
+
+                        {/* 该模板下的员工 */}
+                        <div className="space-y-4">
+                          {templateSettlements.map((settlement) => (
+                            <EmployeeSettlementCard
+                              key={settlement.employee.id}
+                              settlement={settlement}
+                              onUpdateSalaryDate={handleUpdateSalaryDate}
+                              updating={updating === settlement.employee.id}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -167,7 +245,14 @@ function EmployeeSettlementCard({ settlement, onUpdateSalaryDate, updating }: Em
     <div className={`border rounded-lg p-6 ${getStatusColor()}`}>
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h4 className="text-lg font-medium text-gray-900">{settlement.employee.name}</h4>
+          <div className="flex items-center space-x-2">
+            <h4 className="text-lg font-medium text-gray-900">{settlement.employee.name}</h4>
+            {settlement.employee.template && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {settlement.employee.template.name}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-600">
             上次结算日期: {settlement.lastSalaryDate ? new Date(settlement.lastSalaryDate).toLocaleDateString() : '未设置'}
           </p>
