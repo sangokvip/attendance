@@ -17,8 +17,18 @@ export default function SettingsPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState<SettingsTemplate | null>(null)
   const [templateName, setTemplateName] = useState('')
   const [templateDescription, setTemplateDescription] = useState('')
+  const [templateData, setTemplateData] = useState({
+    base_salary: 350,
+    first_client_bonus: 200,
+    additional_client_bonus: 300,
+    no_client_salary: 100,
+    peter_first_client: 50,
+    peter_additional_client: 100
+  })
   const [editedValues, setEditedValues] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
@@ -120,6 +130,43 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('删除模板失败:', error)
       setError('删除模板失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const startEditTemplate = (template: SettingsTemplate) => {
+    setEditingTemplate(template)
+    setTemplateName(template.name)
+    setTemplateDescription(template.description || '')
+    setTemplateData(template.template_data)
+    setShowEditTemplateModal(true)
+    setError('')
+  }
+
+  const updateTemplate = async () => {
+    if (!editingTemplate || !templateName.trim()) {
+      setError('请输入模板名称')
+      return
+    }
+
+    try {
+      setSaving(true)
+      await SettingsTemplateService.update(editingTemplate.id, {
+        name: templateName.trim(),
+        description: templateDescription.trim(),
+        template_data: templateData
+      })
+      await loadTemplates()
+      setShowEditTemplateModal(false)
+      setEditingTemplate(null)
+      setTemplateName('')
+      setTemplateDescription('')
+      setSuccess('模板更新成功')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (error) {
+      console.error('更新模板失败:', error)
+      setError('更新模板失败')
     } finally {
       setSaving(false)
     }
@@ -258,13 +305,22 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         {!template.is_global && (
-                          <button
-                            onClick={() => deleteTemplate(template.id)}
-                            disabled={saving}
-                            className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50 ml-2"
-                          >
-                            删除
-                          </button>
+                          <div className="flex space-x-2 ml-2">
+                            <button
+                              onClick={() => startEditTemplate(template)}
+                              disabled={saving}
+                              className="text-blue-600 hover:text-blue-800 text-sm disabled:opacity-50"
+                            >
+                              编辑
+                            </button>
+                            <button
+                              onClick={() => deleteTemplate(template.id)}
+                              disabled={saving}
+                              className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                            >
+                              删除
+                            </button>
+                          </div>
                         )}
                       </div>
                       <div className="text-xs text-gray-500 mb-3 space-y-1">
@@ -422,6 +478,158 @@ export default function SettingsPage() {
                   className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? '保存中...' : '保存模板'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 编辑模板模态框 */}
+      {showEditTemplateModal && editingTemplate && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">编辑模板</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      模板名称 *
+                    </label>
+                    <input
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      placeholder="请输入模板名称"
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      模板描述
+                    </label>
+                    <input
+                      type="text"
+                      value={templateDescription}
+                      onChange={(e) => setTemplateDescription(e.target.value)}
+                      placeholder="请输入模板描述（可选）"
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* 费用设置 */}
+                <div className="border-t pt-4">
+                  <h4 className="text-md font-medium text-gray-900 mb-3">费用设置</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        有陪客基本工资
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.base_salary}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, base_salary: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        无陪客基本工资
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.no_client_salary}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, no_client_salary: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        第一次陪客提成
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.first_client_bonus}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, first_client_bonus: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        第二次及以后陪客提成
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.additional_client_bonus}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, additional_client_bonus: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Peter第一次陪客收入
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.peter_first_client}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, peter_first_client: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Peter第二次及以后陪客收入
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                        <input
+                          type="number"
+                          value={templateData.peter_additional_client}
+                          onChange={(e) => setTemplateData(prev => ({ ...prev, peter_additional_client: Number(e.target.value) }))}
+                          className="w-full pl-8 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditTemplateModal(false)
+                    setEditingTemplate(null)
+                    setTemplateName('')
+                    setTemplateDescription('')
+                    setError('')
+                  }}
+                  disabled={saving}
+                  className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={updateTemplate}
+                  disabled={saving || !templateName.trim()}
+                  className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? '更新中...' : '更新模板'}
                 </button>
               </div>
             </div>
