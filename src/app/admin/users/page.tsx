@@ -130,7 +130,7 @@ export default function UsersManagementPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requireAdmin={true}>
       <div className="min-h-screen bg-gray-50">
         {/* 导航栏 */}
         <nav className="bg-white shadow-sm border-b">

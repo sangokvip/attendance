@@ -4,14 +4,17 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { EmployeeService } from '@/lib/database'
 import { Employee } from '@/lib/supabase'
+import { AuthService } from '@/lib/auth'
 import AuthGuard from '@/components/AuthGuard'
 
 export default function Home() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     loadEmployees()
+    checkAdminStatus()
   }, [])
 
   const loadEmployees = async () => {
@@ -23,6 +26,10 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const checkAdminStatus = () => {
+    setIsAdmin(AuthService.isAdmin())
   }
 
   return (
@@ -81,7 +88,7 @@ export default function Home() {
               <p className="text-gray-600 mb-4">
                 管理员工考勤，自动计算工资和利润，让您的业务管理更加高效。
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4`}>
                 <Link
                   href="/employees"
                   className="bg-blue-50 hover:bg-blue-100 p-4 rounded-lg border border-blue-200 transition-colors"
@@ -110,6 +117,15 @@ export default function Home() {
                   <div className="text-orange-600 font-medium">工资结算</div>
                   <div className="text-orange-500 text-sm">管理员工工资发放</div>
                 </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin/users"
+                    className="bg-red-50 hover:bg-red-100 p-4 rounded-lg border border-red-200 transition-colors"
+                  >
+                    <div className="text-red-600 font-medium">用户管理</div>
+                    <div className="text-red-500 text-sm">管理系统用户账户</div>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
