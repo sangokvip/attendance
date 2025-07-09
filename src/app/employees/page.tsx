@@ -17,12 +17,12 @@ export default function EmployeesPage() {
   const [newEmployeeName, setNewEmployeeName] = useState('')
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const [currentUser, setCurrentUser] = useState(AuthService.getCurrentUser())
+  const [currentUser] = useState(AuthService.getCurrentUser())
 
   useEffect(() => {
     loadEmployees()
     loadTemplates()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadTemplates = async () => {
     try {
